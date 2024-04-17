@@ -1,0 +1,69 @@
+_schema-version: "3.2"
+ID: webinar
+description: webinar description
+version: 0.0.1
+modules:
+- name: webinar-dest-content
+  type: com.sap.application.content
+  requires:
+  - name: webinar-destination-service
+    parameters:
+      content-target: true
+  - name: webinar-repo-host
+    parameters:
+      service-key:
+        name: webinar-repo-host-key
+  - name: webinar-uaa
+    parameters:
+      service-key:
+        name: webinar-uaa-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: webinar_repo_host
+          ServiceInstanceName: webinar-html5-srv
+          ServiceKeyName: webinar-repo-host-key
+          sap.cloud.service: webinar
+        - Authentication: OAuth2UserTokenExchange
+          Name: webinar_uaa
+          ServiceInstanceName: webinar-xsuaa-srv
+          ServiceKeyName: webinar-uaa-key
+          sap.cloud.service: webinar
+        existing_destinations_policy: update
+  build-parameters:
+    no-source: true
+resources:
+- name: webinar-uaa
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json  
+    service: xsuaa
+    service-name: webinar-xsuaa-srv
+    service-plan: application
+- name: webinar-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      version: 1.0.0
+      init_data:
+        instance:
+          existing_destinations_policy: update
+          destinations:
+          - Name: ui5
+            Type: HTTP
+            URL: https://ui5.sap.com
+            ProxyType: Internet
+            Authentication: NoAuthentication
+    service: destination
+    service-name: webinar-destination-service
+    service-plan: lite
+- name: webinar-repo-host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: webinar-html5-srv
+    service-plan: app-host
+parameters:
+  deploy_mode: html5-repo
